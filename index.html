@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title></title>
+  <!--JQUERY-->
+  <script type="text/javascript" src="https://code.jquery.com/jquery-1.12.3.min.js"></script>
+  <!--Bootstrap 3.3.7-->
+  <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/chartist.js/latest/chartist.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.1.3/Chart.min.js"></script>
+  <!--SweetAlert-->
+  <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/6.6.5/sweetalert2.min.css">
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/6.6.5/sweetalert2.min.js"></script>
+</head>
+
+<body>
+  <div class="col-lg-8">
+    <div class="pres">
+      <p><strong>PRES</strong></p>
+      <input class="p" type="radio" name="radio" value="8">P1
+      <input class="p" type="radio" name="radio" value="9">P2
+      <input class="p" type="radio" name="radio" value="10">P3
+    </div>
+
+    <div class="vpress">
+      <p><strong>VICE-PRES</strong></p>
+      <input class="vp" type="radio" name="radio" value="6">VP1
+      <input class="vp" type="radio" name="radio" value="7">VP2
+    </div>
+
+    <div class="pricing-levels-3">
+      <p><strong>SENATORS(LIMIT 3)</strong></p>
+      <input class="single-checkbox" type="checkbox" name="vehicle" value="1">Senator 1<br>
+      <input class="single-checkbox" type="checkbox" name="vehicle" value="2">Senator 2<br>
+      <input class="single-checkbox" type="checkbox" name="vehicle" value="3">Senator 3<br>
+      <input class="single-checkbox" type="checkbox" name="vehicle" value="4">Senator 4<br>
+      <input class="single-checkbox" type="checkbox" name="vehicle" value="5">Senator 5<br>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <form id="myForm">
+      <br>
+      <input class=" form-control" id="pres" placeholder="P" /><br>
+      <input class=" form-control" id="vice" placeholder="VP" /><br>
+      <input class="senators form-control" id="senators" placeholder="SENATORS" /><br>
+      <input class="senators form-control" id="senators1" placeholder="SENATORS" /><br>
+      <input class="senators form-control" id="senators2" placeholder="SENATORS" /><br>
+      <button type="button" class="btn btn-success addRecord" onclick="addRecord()">SUBMIT </button>
+    </form>
+  </div>
+
+  <div id="chart-container">
+    <canvas id="mycanvas"></canvas>
+  </div>
+
+  <div id="jspec_material"></div>
+
+  <style type="text/css">
+    #chart-container {
+      width: 640px;
+      height: auto;
+    }
+  </style>
+
+  <div class="fetch_nominated_presidents"></div>
+  <div class="fetch_nominated_vicepresident"></div>
+  <div class="fetch_nominated_senators"></div>
+</body>
+
+</html>
+<script type="text/javascript">
+  function fetch_nominated_presidents() {
+    $.get("ajax/fetch_nominated_presidents.php", {}, function(data, status) {
+      $(".fetch_nominated_presidents").html(data);
+    });
+  }
+
+  function fetch_nominated_vicepresident() {
+    $.get("ajax/fetch_nominated_vicepresident.php", {}, function(data, status) {
+      $(".fetch_nominated_vicepresident").html(data);
+    });
+  }
+
+  function fetch_nominated_senators() {
+    $.get("ajax/fetch_nominated_senators.php", {}, function(data, status) {
+      $(".fetch_nominated_senators").html(data);
+    });
+  }
+
+  $(document).ready(function() {
+    fetch_nominated_presidents();
+    fetch_nominated_vicepresident();
+    fetch_nominated_senators();
+  });
+
+  $('.p').on('change', function() {
+    $('#pres').val($(this).val());
+  });
+  $('.vp').on('change', function() {
+    $('#vice').val($(this).val());
+  });
+
+  var senate$ = $('.senators');
+  var limit = senate$.length;
+  $('input.single-checkbox').on('change', function(evt) {
+    var index = $(this).siblings(':checked').length;
+    var value = $(this).val();
+    if (index >= limit) {
+      this.checked = false;
+    } else {
+      $(senate$[index]).val(this.checked ? value : null);
+    }
+  });
+
+  function addRecord() {
+    swal({
+      title: 'Are you sure?',
+      text: "You won't be able to revert this!",
+      type: 'warning',
+      showCancelButton: true,
+      //confirmButtonColor: '#3085d6',
+      // cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, delete it!',
+      cancelButtonText: 'No, cancel!',
+      confirmButtonClass: 'btn btn-success',
+      cancelButtonClass: 'btn btn-danger',
+      //buttonsStyling: false
+    }).then(function() {
+      swal(
+        'Deleted!',
+        'Your file has been deleted.',
+        'success'
+      )
+
+      var pres = $("#pres").val();
+      var vice = $("#vice").val();
+      var senators = $("#senators").val();
+      var senators1 = $("#senators1").val();
+      var senators2 = $("#senators2").val();
+      // Add record
+      $.post("ajax/castvote.php", {
+        pres: pres,
+        vice: vice,
+        senators: senators,
+        senators1: senators1,
+        senators2: senators2,
+      }, function(data, status) {
+        $("#pres").val("");
+        $("#vice").val("");
+        $("#senators").val("");
+        $("#senators1").val("");
+        $("#senators2").val("");
+      });
+
+    }, function(dismiss) {
+      if (dismiss === 'cancel') {
+        swal(
+          'Cancelled',
+          'Your imaginary file is safe :)',
+          'error'
+        )
+      }
+    });
+  }
+
+  $(document).ready(function() {
+    $.ajax({
+      url: "ajax/castvote_calc.php",
+      method: "GET",
+      success: function(data) {
+        console.log(data);
+        var candidates = [];
+        var totalvotes = [];
+
+        for (var i in data) {
+          candidates.push(data[i].candidates);
+          totalvotes.push(data[i].totalvotes);
+        }
+
+        var chartdata = {
+          labels: candidates,
+          datasets: [{
+            label: 'Votes',
+            backgroundColor: 'rgba(200, 200, 200, 0.75)',
+            borderColor: 'rgba(200, 200, 200, 0.75)',
+            hoverBackgroundColor: 'rgba(200, 200, 200, 1)',
+            hoverBorderColor: 'rgba(200, 200, 200, 1)',
+            data: totalvotes
+          }]
+        };
+
+        var ctx = $("#mycanvas");
+
+        var barGraph = new Chart(ctx, {
+          type: 'bar',
+          data: chartdata
+        });
+      },
+      error: function(data) {
+        console.log(data);
+      }
+    });
+  });
+</script>
